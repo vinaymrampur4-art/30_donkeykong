@@ -31,7 +31,7 @@ def platform_y(platform, x):
     return y1 + (y2 - y1) * (x - x1) / (x2 - x1)
 
 
-# TASK 2: Dynamic theme color
+# TASK 2: Dynamic background theme
 def theme_color(score):
     """Return an (r, g, b) background colour for the current score, or None for the default."""
     if score <= 0:
@@ -55,10 +55,13 @@ def on_barrel_jumped(player, barrel):
     })
 
 
-# TASK 4: Still to be implemented
+# TASK 4: Score multiplier
 def score_multiplier(score):
     """Return a multiplier applied to points earned from clearing a barrel, or None for the default 1x."""
-    pass
+    if score >= 500:
+        return 2
+
+    return None
 
 
 class Player:
@@ -72,12 +75,22 @@ class Player:
         self.ladder = None
 
     def center(self):
-        return pygame.Vector2(self.pos.x, self.pos.y - PLAYER_H / 2)
+        return pygame.Vector2(
+            self.pos.x,
+            self.pos.y - PLAYER_H / 2
+        )
 
     def find_ladder(self, going_up):
         for index, (lx, lower, upper) in enumerate(LADDERS):
-            top = platform_y(PLATFORMS[upper], lx)
-            bottom = platform_y(PLATFORMS[lower], lx)
+            top = platform_y(
+                PLATFORMS[upper],
+                lx
+            )
+
+            bottom = platform_y(
+                PLATFORMS[lower],
+                lx
+            )
 
             if abs(self.pos.x - lx) > 10:
                 continue
@@ -96,11 +109,20 @@ class Player:
             self.on_ground = False
 
     def update(self, dt, keys):
-        move = keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
-        vertical = keys[pygame.K_DOWN] - keys[pygame.K_UP]
+        move = (
+            keys[pygame.K_RIGHT]
+            - keys[pygame.K_LEFT]
+        )
+
+        vertical = (
+            keys[pygame.K_DOWN]
+            - keys[pygame.K_UP]
+        )
 
         if self.ladder is None and vertical:
-            found = self.find_ladder(going_up=vertical < 0)
+            found = self.find_ladder(
+                going_up=vertical < 0
+            )
 
             if found is not None:
                 self.ladder = found
@@ -114,13 +136,19 @@ class Player:
 
         self.pos.x = max(
             10,
-            min(WIDTH - 10, self.pos.x + move * WALK_SPEED * dt)
+            min(
+                WIDTH - 10,
+                self.pos.x + move * WALK_SPEED * dt
+            )
         )
 
         if self.on_ground and self.vel.y >= 0:
             for plat in PLATFORMS:
                 if plat[0] <= self.pos.x <= plat[1]:
-                    py = platform_y(plat, self.pos.x)
+                    py = platform_y(
+                        plat,
+                        self.pos.x
+                    )
 
                     if abs(py - self.pos.y) <= 8:
                         self.pos.y = py
@@ -140,9 +168,15 @@ class Player:
         if self.vel.y >= 0:
             for plat in PLATFORMS:
                 if plat[0] <= self.pos.x <= plat[1]:
-                    py = platform_y(plat, self.pos.x)
+                    py = platform_y(
+                        plat,
+                        self.pos.x
+                    )
 
-                    if previous <= py + 3 and self.pos.y >= py:
+                    if (
+                        previous <= py + 3
+                        and self.pos.y >= py
+                    ):
                         self.pos.y = py
                         self.vel.y = 0
                         self.on_ground = True
@@ -151,10 +185,19 @@ class Player:
     def climb(self, dt, vertical):
         lx, lower, upper = LADDERS[self.ladder]
 
-        self.pos.y += vertical * CLIMB_SPEED * dt
+        self.pos.y += (
+            vertical * CLIMB_SPEED * dt
+        )
 
-        top = platform_y(PLATFORMS[upper], lx)
-        bottom = platform_y(PLATFORMS[lower], lx)
+        top = platform_y(
+            PLATFORMS[upper],
+            lx
+        )
+
+        bottom = platform_y(
+            PLATFORMS[lower],
+            lx
+        )
 
         if self.pos.y <= top:
             self.pos.y = top
@@ -199,7 +242,9 @@ class Barrel:
             return
 
         if self.plat is None:
-            previous = self.pos.y + BARREL_R
+            previous = (
+                self.pos.y + BARREL_R
+            )
 
             self.vy += GRAVITY * dt
             self.pos.y += self.vy * dt
@@ -213,8 +258,14 @@ class Barrel:
                         self.pos.x
                     )
 
-                    if previous <= py + 2 and feet >= py:
-                        self.plat, self.vy = index, 0
+                    if (
+                        previous <= py + 2
+                        and feet >= py
+                    ):
+                        self.plat, self.vy = (
+                            index,
+                            0
+                        )
                         break
 
             return
@@ -224,16 +275,25 @@ class Barrel:
         slope = plat[3] - plat[2]
 
         if slope:
-            self.direction = 1 if slope > 0 else -1
+            self.direction = (
+                1 if slope > 0 else -1
+            )
 
-        self.pos.x += self.direction * BARREL_SPEED * dt
+        self.pos.x += (
+            self.direction
+            * BARREL_SPEED
+            * dt
+        )
 
         if not plat[0] <= self.pos.x <= plat[1]:
             self.plat, self.vy = None, 0
             return
 
         self.pos.y = (
-            platform_y(plat, self.pos.x)
+            platform_y(
+                plat,
+                self.pos.x
+            )
             - BARREL_R
         )
 
@@ -245,15 +305,27 @@ class Barrel:
             ):
                 self.skip.add(index)
 
-                # TASK 1: approximately 30% chance of taking a ladder
+                # TASK 1:
+                # approximately 30% chance of taking a ladder
                 if random.random() < 0.3:
                     self.ladder = index
                     self.pos.x = lx
 
 
-def draw_scene(screen, font, player, barrels, score, lives, state):
-    # TASK 2: use score-dependent background
-    screen.fill(theme_color(score) or BG)
+def draw_scene(
+    screen,
+    font,
+    player,
+    barrels,
+    score,
+    lives,
+    state
+):
+    # TASK 2:
+    # Change background according to score
+    screen.fill(
+        theme_color(score) or BG
+    )
 
     for x1, x2, y1, y2 in PLATFORMS:
         pygame.draw.line(
@@ -291,7 +363,11 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
             3
         )
 
-        for y in range(int(top) + 8, int(bottom), 12):
+        for y in range(
+            int(top) + 8,
+            int(bottom),
+            12
+        ):
             pygame.draw.line(
                 screen,
                 (220, 190, 80),
@@ -314,7 +390,10 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
     pygame.draw.circle(
         screen,
         (255, 150, 200),
-        (PRINCESS_POS[0], PRINCESS_POS[1] - 14),
+        (
+            PRINCESS_POS[0],
+            PRINCESS_POS[1] - 14
+        ),
         10
     )
 
@@ -350,9 +429,13 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
         (240, 240, 240)
     )
 
-    screen.blit(hud, (10, 8))
+    screen.blit(
+        hud,
+        (10, 8)
+    )
 
-    # TASK 3: draw floating +100 effects
+    # TASK 3:
+    # Draw temporary +100 floating effects
     for effect in floating_texts:
         label = font.render(
             effect["text"],
@@ -362,7 +445,9 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
 
         screen.blit(
             label,
-            label.get_rect(center=effect["pos"])
+            label.get_rect(
+                center=effect["pos"]
+            )
         )
 
     if state != "play":
@@ -381,7 +466,10 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
         screen.blit(
             label,
             label.get_rect(
-                center=(WIDTH // 2, HEIGHT // 2)
+                center=(
+                    WIDTH // 2,
+                    HEIGHT // 2
+                )
             )
         )
 
@@ -393,10 +481,15 @@ def main():
         (WIDTH, HEIGHT)
     )
 
-    pygame.display.set_caption("Donkey Kong")
+    pygame.display.set_caption(
+        "Donkey Kong"
+    )
 
     clock = pygame.time.Clock()
-    font = pygame.font.Font(None, 28)
+    font = pygame.font.Font(
+        None,
+        28
+    )
 
     player, barrels = Player(), []
 
@@ -448,7 +541,9 @@ def main():
             spawn_timer -= dt
 
             if spawn_timer <= 0:
-                barrels.append(Barrel())
+                barrels.append(
+                    Barrel()
+                )
 
                 spawn_timer = random.uniform(
                     1.8,
@@ -459,11 +554,13 @@ def main():
                 barrel.update(dt)
 
                 hit_range = (
-                    BARREL_R + PLAYER_W / 2
+                    BARREL_R
+                    + PLAYER_W / 2
                 )
 
                 if (
-                    player.center().distance_squared_to(
+                    player.center()
+                    .distance_squared_to(
                         barrel.pos
                     )
                     < hit_range ** 2
@@ -481,18 +578,26 @@ def main():
 
                     break
 
-                # TASK 3: detect successful barrel jump
+                # TASK 3:
+                # Detect successful barrel jump
                 if (
                     not player.on_ground
                     and not barrel.scored
-                    and abs(barrel.pos.x - player.pos.x) < 25
-                    and player.pos.y < barrel.pos.y
+                    and abs(
+                        barrel.pos.x
+                        - player.pos.x
+                    ) < 25
+                    and player.pos.y
+                    < barrel.pos.y
                 ):
                     barrel.scored = True
 
                     score += int(
                         100
-                        * (score_multiplier(score) or 1)
+                        * (
+                            score_multiplier(score)
+                            or 1
+                        )
                     )
 
                     on_barrel_jumped(
@@ -501,13 +606,16 @@ def main():
                     )
 
             barrels[:] = [
-                b for b in barrels
+                b
+                for b in barrels
                 if b.pos.y < HEIGHT + 30
             ]
 
             if (
                 player.center().distance_to(
-                    pygame.Vector2(PRINCESS_POS)
+                    pygame.Vector2(
+                        PRINCESS_POS
+                    )
                 )
                 < 24
             ):
